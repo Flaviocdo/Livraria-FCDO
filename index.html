@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal do Professor — Meus Materiais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #185FA5;
+  --blue-light: #E6F1FB;
+  --blue-dark: #0C447C;
+  --text: #1a1a1a;
+  --text2: #555;
+  --text3: #888;
+  --bg: #F7F6F3;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.18);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+/* ── Layout ── */
+.app { max-width: 980px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2.5rem; flex-wrap: wrap; gap: 12px;
+}
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-mark {
+  width: 40px; height: 40px; background: var(--blue);
+  border-radius: 11px; display: flex; align-items: center; justify-content: center;
+}
+.logo-mark svg { width: 22px; height: 22px; fill: #fff; }
+.logo-text { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); line-height: 1.1; }
+.logo-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+.user-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 14px 6px 8px;
+  background: var(--surface); border: 0.5px solid var(--border2);
+  border-radius: 99px; cursor: pointer; transition: background .15s;
+  font-size: 13px; color: var(--text2);
+}
+.user-pill:hover { background: #f0ede8; }
+.avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500;
+}
+.logout-hint { font-size: 11px; color: var(--text3); }
+
+/* ── Login ── */
+.login-screen {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 5rem 1rem; text-align: center;
+}
+.ms-logo { margin-bottom: 1.5rem; }
+.login-title { font-family: 'DM Serif Display', serif; font-size: 26px; margin-bottom: .5rem; }
+.login-desc { font-size: 14px; color: var(--text2); max-width: 320px; line-height: 1.7; margin-bottom: 2rem; }
+.ms-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 12px 26px; background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius-sm); font-size: 15px;
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  cursor: pointer; transition: opacity .15s;
+}
+.ms-btn:hover { opacity: .88; }
+.login-note { font-size: 12px; color: var(--text3); margin-top: 1rem; }
+
+/* ── Section label ── */
+.section-label {
+  font-size: 11px; font-weight: 500; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: .85rem;
+}
+
+/* ── Turmas grid ── */
+.turmas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; margin-bottom: 2rem;
+}
+.turma-card {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); padding: 1.1rem 1.1rem 1rem;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+  box-shadow: var(--shadow);
+}
+.turma-card:hover { border-color: var(--border2); box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.turma-card.active { border-color: var(--blue); border-width: 1.5px; }
+.turma-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.turma-badge {
+  display: inline-block; font-size: 11px; font-weight: 500;
+  padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; margin-top: 4px;
+}
+.turma-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+.turma-count { font-size: 11px; color: var(--text3); margin-top: 8px; }
+.add-turma {
+  background: transparent; border: 0.5px dashed var(--border2);
+  border-radius: var(--radius); padding: 1.1rem;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  cursor: pointer; font-size: 14px; color: var(--text3);
+  transition: all .15s; font-family: 'DM Sans', sans-serif;
+  box-shadow: none;
+}
+.add-turma:hover { background: var(--surface); color: var(--text); }
+
+/* ── Painel de materiais ── */
+.panel {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.1rem 1.4rem; border-bottom: 0.5px solid var(--border);
+  flex-wrap: wrap; gap: 10px;
+}
+.panel-title-group { display: flex; align-items: center; gap: 10px; }
+.panel-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.panel-title { font-size: 15px; font-weight: 500; }
+.panel-sub { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.panel-actions { display: flex; gap: 8px; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: var(--blue); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88; }
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: transparent;
+  border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+  font-size: 13px; color: var(--text2);
+  font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s;
+}
+.btn-secondary:hover { background: var(--bg); }
+.btn-secondary.spinning svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Status bar ── */
+.status-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: .55rem 1.4rem; font-size: 12px; color: var(--text3);
+  background: #fafaf8; border-bottom: 0.5px solid var(--border);
+}
+.sdot { width: 7px; height: 7px; border-radius: 50%; }
+.sdot.ok { background: #1D9E75; }
+.sdot.warn { background: #BA7517; }
+.sdot.err { background: #E24B4A; }
+
+/* ── Search ── */
+.search-wrap { padding: .7rem 1.4rem; border-bottom: 0.5px solid var(--border); }
+.search-input {
+  width: 100%; padding: 7px 12px; font-size: 14px;
+  border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--blue); }
+
+/* ── Drop zone ── */
+.drop-zone {
+  margin: .75rem 1.4rem; border: 1.5px dashed var(--border2);
+  border-radius: var(--radius-sm); padding: 1.5rem 1rem;
+  text-align: center; font-size: 13px; color: var(--text3);
+  background: var(--bg); display: none; transition: all .15s;
+}
+.drop-zone.visible { display: block; }
+.drop-zone.over { border-color: var(--blue); background: var(--blue-light); color: var(--blue-dark); }
+
+/* ── File list ── */
+.file-group-head {
+  padding: .5rem 1.4rem; font-size: 11px; font-weight: 500;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .06em;
+  background: #fafaf8; border-bottom: 0.5px solid var(--border);
+}
+.file-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: .8rem 1.4rem; border-bottom: 0.5px solid var(--border);
+  transition: background .1s; cursor: default;
+}
+.file-item:last-child { border-bottom: none; }
+.file-item:hover { background: #fafaf8; }
+.ficon {
+  width: 34px; height: 34px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0; letter-spacing: .02em;
+}
+.ficon.pdf { background: #FAECE7; color: #712B13; }
+.ficon.doc { background: #E6F1FB; color: #0C447C; }
+.ficon.ppt { background: #FAEEDA; color: #633806; }
+.ficon.xls { background: #EAF3DE; color: #27500A; }
+.ficon.img { background: #EAF3DE; color: #3B6D11; }
+.ficon.vid { background: #EEEDFE; color: #3C3489; }
+.ficon.arq { background: #F1EFE8; color: #5F5E5A; }
+.finfo { flex: 1; min-width: 0; }
+.fname { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fmeta { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.factions { display: flex; gap: 4px; flex-shrink: 0; }
+.iBtn {
+  width: 30px; height: 30px; border: none; background: transparent;
+  border-radius: 6px; cursor: pointer; color: var(--text3);
+  display: flex; align-items: center; justify-content: center; transition: all .12s;
+}
+.iBtn:hover { background: var(--bg); color: var(--text); }
+
+.empty { padding: 3rem 1.4rem; text-align: center; color: var(--text3); }
+.empty p { font-size: 14px; margin-top: 8px; }
+
+/* ── Info banner ── */
+.info-banner {
+  background: var(--blue-light); border: 0.5px solid #B5D4F4;
+  border-radius: var(--radius-sm); padding: .75rem 1rem;
+  font-size: 13px; color: var(--blue-dark); margin-bottom: 1.5rem; line-height: 1.6;
+}
+.info-banner strong { font-weight: 500; }
+
+/* ── Modals ── */
+.modal-wrap {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.45); z-index: 100;
+  align-items: center; justify-content: center; padding: 1rem;
+}
+.modal-wrap.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: var(--radius);
+  padding: 1.5rem; width: 100%; max-width: 400px;
+  border: 0.5px solid var(--border2); box-shadow: 0 8px 32px rgba(0,0,0,.12);
+}
+.modal-title { font-size: 16px; font-weight: 500; margin-bottom: 1.25rem; }
+.modal label { font-size: 12px; color: var(--text3); display: block; margin: 12px 0 4px; }
+.modal input, .modal select {
+  width: 100%; padding: 8px 10px; font-size: 14px;
+  border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif; outline: none;
+}
+.modal input:focus, .modal select:focus { border-color: var(--blue); }
+.modal-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.5rem; }
+.swatches { display: flex; gap: 8px; margin-top: 4px; }
+.swatch {
+  width: 24px; height: 24px; border-radius: 50%;
+  cursor: pointer; border: 2px solid transparent; transition: transform .12s;
+}
+.swatch.sel { border-color: var(--blue); transform: scale(1.18); }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  background: #1a1a1a; color: #fff;
+  padding: 10px 18px; border-radius: var(--radius-sm);
+  font-size: 13px; z-index: 300;
+  opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── Responsive ── */
+@media (max-width: 580px) {
+  .app { padding: 1.25rem .75rem 3rem; }
+  .turmas-grid { grid-template-columns: 1fr 1fr; }
+  .panel-head { padding: .9rem 1rem; }
+  .file-item { padding: .75rem 1rem; }
+  .search-wrap { padding: .6rem 1rem; }
+  .status-bar { padding: .5rem 1rem; }
+  .drop-zone { margin: .6rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">Meus Materiais</div>
+        <div class="logo-sub">Portal do Professor</div>
+      </div>
+    </div>
+    <div id="userPill" class="user-pill" style="display:none" onclick="logout()">
+      <div class="avatar" id="userAvatar">?</div>
+      <span id="userName">...</span>
+      <span class="logout-hint">· sair</span>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div id="loginScreen" class="login-screen">
+    <div class="ms-logo">
+      <svg width="52" height="52" viewBox="0 0 23 23">
+        <path fill="#f25022" d="M1 1h10v10H1z"/>
+        <path fill="#00a4ef" d="M12 1h10v10H12z"/>
+        <path fill="#7fba00" d="M1 12h10v10H1z"/>
+        <path fill="#ffb900" d="M12 12h10v10H12z"/>
+      </svg>
+    </div>
+    <div class="login-title">Portal do Professor</div>
+    <div class="login-desc">Entre com sua conta Microsoft para gerenciar seus materiais diretamente no OneDrive, organizados por turma.</div>
+    <button class="ms-btn" onclick="loginMicrosoft()">
+      <svg width="18" height="18" viewBox="0 0 23 23">
+        <path fill="#f25022" d="M1 1h10v10H1z"/>
+        <path fill="#00a4ef" d="M12 1h10v10H12z"/>
+        <path fill="#7fba00" d="M1 12h10v10H1z"/>
+        <path fill="#ffb900" d="M12 12h10v10H12z"/>
+      </svg>
+      Entrar com Microsoft
+    </button>
+    <div class="login-note">Seus arquivos ficam no seu OneDrive. Nada é armazenado neste site.</div>
+  </div>
+
+  <!-- Main -->
+  <div id="mainScreen" style="display:none">
+    <div class="info-banner">
+      Todos os materiais ficam salvos em <strong>OneDrive → Documentos → Portal Professor</strong>. Uma única pasta raiz, com subpastas por turma.
+    </div>
+
+    <div class="section-label">Turmas</div>
+    <div class="turmas-grid" id="turmasGrid"></div>
+
+    <div class="panel" id="materiaisPanel" style="display:none">
+      <div class="panel-head">
+        <div class="panel-title-group">
+          <div class="panel-dot" id="panelDot"></div>
+          <div>
+            <div class="panel-title" id="panelTitle"></div>
+            <div class="panel-sub" id="panelSub"></div>
+          </div>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-secondary" id="btnSync" onclick="syncTurma()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            Sincronizar
+          </button>
+          <button class="btn-primary" onclick="triggerUpload()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            Enviar arquivo
+          </button>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="sdot ok" id="sdot"></div>
+        <span id="stext">Sincronizado com OneDrive</span>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" id="searchInput" type="text" placeholder="Buscar materiais…" oninput="renderFiles()">
+      </div>
+      <div class="drop-zone" id="dropZone">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;opacity:.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div>Solte os arquivos aqui para enviar ao OneDrive</div>
+        <div style="font-size:11px;margin-top:4px;opacity:.7">PDF, Word, PowerPoint, imagens, vídeos…</div>
+      </div>
+      <div id="fileList"></div>
+      <input type="file" id="fileInput" multiple style="display:none" onchange="handleUpload(this)">
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Modal: nova turma -->
+<div class="modal-wrap" id="turmaModal">
+  <div class="modal">
+    <div class="modal-title">Nova turma</div>
+    <label>Nome da turma</label>
+    <input id="mNome" type="text" placeholder="Ex: Biologia 3º Ano B">
+    <label>Disciplina</label>
+    <input id="mDisc" type="text" placeholder="Ex: Biologia">
+    <label>Cor</label>
+    <div class="swatches" id="swatches"></div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveTurma()">Criar turma</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const GRAPH = 'https://graph.microsoft.com/v1.0';
+const BASE  = 'Portal Professor';
+const COLORS = [
+  {bar:'#185FA5', badge:'#E6F1FB', btext:'#0C447C'},
+  {bar:'#0F6E56', badge:'#E1F5EE', btext:'#085041'},
+  {bar:'#993C1D', badge:'#FAECE7', btext:'#712B13'},
+  {bar:'#854F0B', badge:'#FAEEDA', btext:'#633806'},
+  {bar:'#534AB7', badge:'#EEEDFE', btext:'#3C3489'},
+  {bar:'#993556', badge:'#FBEAF0', btext:'#72243E'},
+];
+
+let token = null;
+let turmas = [];
+let activeId = null;
+let selColor = 0;
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+function loginMicrosoft() {
+  const p = new URLSearchParams({
+    client_id: '9ba1a5c7-f17a-43db-8a94-5d533b66f8b7',
+    response_type: 'token',
+    redirect_uri: location.origin + location.pathname,
+    scope: 'https://graph.microsoft.com/Files.ReadWrite https://graph.microsoft.com/User.Read openid',
+    response_mode: 'fragment',
+    nonce: Math.random().toString(36)
+  });
+  location.href = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?' + p;
+}
+
+function parseHash() {
+  const h = location.hash.substring(1);
+  if (!h) return null;
+  return new URLSearchParams(h).get('access_token') || null;
+}
+
+async function init() {
+  const t = parseHash();
+  if (t) {
+    token = t;
+    history.replaceState(null, '', location.pathname);
+    await loadUser();
+    show('mainScreen');
+    hide('loginScreen');
+    await loadAll();
+  }
+}
+
+async function loadUser() {
+  try {
+    const u = await gf('/me');
+    const name = u.displayName || u.userPrincipalName || 'Professor';
+    const ini  = name.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+    document.getElementById('userAvatar').textContent = ini;
+    document.getElementById('userName').textContent   = name.split(' ')[0];
+    show('userPill');
+  } catch(e) {}
+}
+
+function logout() {
+  token = null; turmas = []; activeId = null;
+  hide('userPill'); hide('mainScreen'); hide('materiaisPanel');
+  show('loginScreen');
+}
+
+// ── Graph helpers ─────────────────────────────────────────────────────────────
+async function gf(path, opts = {}) {
+  const r = await fetch(GRAPH + path, {
+    ...opts,
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', ...(opts.headers||{}) }
+  });
+  if (!r.ok) throw new Error(await r.text());
+  if (r.status === 204) return null;
+  return r.json();
+}
+
+// ── OneDrive folders ──────────────────────────────────────────────────────────
+async function getRootId() {
+  // Try Documentos first, fall back to drive root
+  try {
+    const r = await gf('/me/drive/root:/Documentos/' + encodeURIComponent(BASE) + '?$select=id');
+    return r.id;
+  } catch(e) {}
+  // create under root
+  try {
+    const r = await gf('/me/drive/root:/Documentos?$select=id');
+    return (await gf('/me/drive/items/' + r.id + '/children', {
+      method: 'POST',
+      body: JSON.stringify({name: BASE, folder:{}, '@microsoft.graph.conflictBehavior':'rename'})
+    })).id;
+  } catch(e) {
+    return (await gf('/me/drive/root/children', {
+      method: 'POST',
+      body: JSON.stringify({name: BASE, folder:{}, '@microsoft.graph.conflictBehavior':'rename'})
+    })).id;
+  }
+}
+
+async function loadAll() {
+  setStatus('warn', 'Carregando turmas do OneDrive…');
+  try {
+    const rootId = await getRootId();
+    window._rootId = rootId;
+    const ch = await gf('/me/drive/items/' + rootId + '/children?$select=id,name,folder&$orderby=name');
+    turmas = [];
+    for (const item of (ch.value || [])) {
+      if (!item.folder) continue;
+      const {nome, disciplina, cor} = parseFolderName(item.name);
+      const turma = {id: item.id, odId: item.id, nome, disciplina, cor, arquivos: []};
+      const files = await gf('/me/drive/items/' + item.id + '/children?$select=id,name,size,lastModifiedDateTime,file,webUrl');
+      turma.arquivos = (files.value || []).filter(f => f.file).map(f => ({
+        id: f.id, nome: f.name, tipo: ext2tipo(f.name),
+        data: new Date(f.lastModifiedDateTime).toLocaleDateString('pt-BR'),
+        tamanho: fmtSize(f.size), webUrl: f.webUrl
+      }));
+      turmas.push(turma);
+    }
+    renderTurmas();
+    setStatus('ok', 'Sincronizado · ' + turmas.length + ' turma(s)');
+  } catch(e) {
+    setStatus('err', 'Erro ao conectar ao OneDrive');
+    toast('Erro: ' + e.message);
+  }
+}
+
+function parseFolderName(raw) {
+  const cm = raw.match(/\[c(\d)\]$/);
+  const cor = cm ? parseInt(cm[1]) : 0;
+  const s1  = raw.replace(/\[c\d\]$/, '').trim();
+  const dm  = s1.match(/\[d:([^\]]+)\]/);
+  const disciplina = dm ? dm[1] : s1;
+  const nome = s1.replace(/\[d:[^\]]+\]/, '').trim();
+  return {nome, disciplina, cor};
+}
+
+function makeFolderName(nome, disc, cor) {
+  return nome + ' [d:' + disc + '][c' + cor + ']';
+}
+
+// ── Render turmas ─────────────────────────────────────────────────────────────
+function renderTurmas() {
+  const g = document.getElementById('turmasGrid');
+  g.innerHTML = '';
+  turmas.forEach(t => {
+    const c = COLORS[t.cor];
+    const n = t.arquivos.length;
+    const d = document.createElement('div');
+    d.className = 'turma-card' + (activeId === t.id ? ' active' : '');
+    d.onclick = () => selectTurma(t.id);
+    d.innerHTML = `
+      <div class="turma-bar" style="background:${c.bar}"></div>
+      <div class="turma-badge" style="background:${c.badge};color:${c.btext}">${t.disciplina}</div>
+      <div class="turma-name">${t.nome}</div>
+      <div class="turma-count">${n} arquivo${n!==1?'s':''} · OneDrive</div>`;
+    g.appendChild(d);
+  });
+  const add = document.createElement('div');
+  add.className = 'add-turma';
+  add.onclick = openTurmaModal;
+  add.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Nova turma`;
+  g.appendChild(add);
+}
+
+function selectTurma(id) {
+  activeId = id;
+  renderTurmas();
+  const t = turmas.find(x => x.id === id);
+  const c = COLORS[t.cor];
+  document.getElementById('panelDot').style.background = c.bar;
+  document.getElementById('panelTitle').textContent = t.nome;
+  document.getElementById('panelSub').textContent = t.disciplina + ' · ' + t.arquivos.length + ' arquivo(s)';
+  show('materiaisPanel');
+  document.getElementById('searchInput').value = '';
+  renderFiles();
+  document.getElementById('materiaisPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ── Render files ──────────────────────────────────────────────────────────────
+function renderFiles() {
+  const t = turmas.find(x => x.id === activeId);
+  if (!t) return;
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = t.arquivos.filter(f => f.nome.toLowerCase().includes(q));
+  const fl = document.getElementById('fileList');
+
+  if (!filtered.length) {
+    fl.innerHTML = `<div class="empty">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:.3">
+        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+        <polyline points="13 2 13 9 20 9"/>
+      </svg>
+      <p>Nenhum arquivo encontrado</p></div>`;
+    return;
+  }
+  fl.innerHTML = '';
+  // group header
+  const gh = document.createElement('div');
+  gh.className = 'file-group-head';
+  gh.textContent = 'Arquivos · OneDrive';
+  fl.appendChild(gh);
+  filtered.forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'file-item';
+    const labels = {pdf:'PDF', doc:'DOC', ppt:'PPT', xls:'XLS', img:'IMG', vid:'VID', arq:'ARQ'};
+    d.innerHTML = `
+      <div class="ficon ${f.tipo}">${labels[f.tipo]||'ARQ'}</div>
+      <div class="finfo">
+        <div class="fname">${f.nome}</div>
+        <div class="fmeta">${f.data}${f.tamanho?' · '+f.tamanho:''} · OneDrive</div>
+      </div>
+      <div class="factions">
+        <button class="iBtn" title="Abrir no OneDrive" onclick="openOD('${escAttr(f.webUrl)}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+        </button>
+        <button class="iBtn" title="Baixar" onclick="downloadOD('${f.id}','${escAttr(f.nome)}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </button>
+      </div>`;
+    fl.appendChild(d);
+  });
+  document.getElementById('panelSub').textContent = t.disciplina + ' · ' + t.arquivos.length + ' arquivo(s)';
+}
+
+function escAttr(s) { return (s||'').replace(/'/g,"\\'"); }
+
+function openOD(url) { if (url && url !== 'undefined') window.open(url, '_blank'); }
+
+async function downloadOD(id, nome) {
+  try {
+    const r = await gf('/me/drive/items/' + id + '?$select=@microsoft.graph.downloadUrl');
+    const a = document.createElement('a');
+    a.href = r['@microsoft.graph.downloadUrl'];
+    a.download = nome;
+    a.click();
+  } catch(e) { toast('Erro ao baixar arquivo'); }
+}
+
+// ── Upload ────────────────────────────────────────────────────────────────────
+function triggerUpload() {
+  const dz = document.getElementById('dropZone');
+  dz.classList.toggle('visible');
+  if (dz.classList.contains('visible')) document.getElementById('fileInput').click();
+}
+
+async function handleUpload(input) {
+  const t = turmas.find(x => x.id === activeId);
+  if (!t || !t.odId) { toast('Selecione uma turma válida'); return; }
+  setStatus('warn', 'Enviando para OneDrive…');
+  let ok = 0;
+  for (const file of Array.from(input.files)) {
+    try {
+      const buf = await file.arrayBuffer();
+      const r = await fetch(
+        GRAPH + '/me/drive/items/' + t.odId + ':/' + encodeURIComponent(file.name) + ':/content',
+        { method:'PUT', headers:{'Authorization':'Bearer '+token,'Content-Type':file.type||'application/octet-stream'}, body:buf }
+      );
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      t.arquivos.push({
+        id: data.id, nome: file.name, tipo: ext2tipo(file.name),
+        data: new Date().toLocaleDateString('pt-BR'),
+        tamanho: fmtSize(file.size), webUrl: data.webUrl
+      });
+      ok++;
+    } catch(e) { toast('Erro ao enviar: ' + file.name); }
+  }
+  renderFiles();
+  document.getElementById('dropZone').classList.remove('visible');
+  setStatus('ok', ok + ' arquivo(s) enviado(s) ao OneDrive');
+  toast(ok + ' arquivo(s) enviado(s) com sucesso!');
+  input.value = '';
+}
+
+async function syncTurma() {
+  const btn = document.getElementById('btnSync');
+  btn.classList.add('spinning');
+  await loadAll();
+  if (activeId) {
+    const t = turmas.find(x => x.id === activeId);
+    if (t) selectTurma(t.id);
+    else { hide('materiaisPanel'); activeId = null; }
+  }
+  btn.classList.remove('spinning');
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────────────────
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  if (e.dataTransfer.files.length) handleUpload({files: e.dataTransfer.files});
+});
+
+// ── Nova turma ────────────────────────────────────────────────────────────────
+function openTurmaModal() {
+  document.getElementById('mNome').value = '';
+  document.getElementById('mDisc').value = '';
+  selColor = 0;
+  renderSwatches();
+  document.getElementById('turmaModal').classList.add('open');
+}
+function closeModal() { document.getElementById('turmaModal').classList.remove('open'); }
+
+function renderSwatches() {
+  const c = document.getElementById('swatches');
+  c.innerHTML = '';
+  COLORS.forEach((col, i) => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (i === selColor ? ' sel' : '');
+    s.style.background = col.bar;
+    s.onclick = () => { selColor = i; renderSwatches(); };
+    c.appendChild(s);
+  });
+}
+
+async function saveTurma() {
+  const nome = document.getElementById('mNome').value.trim();
+  const disc = document.getElementById('mDisc').value.trim() || nome;
+  if (!nome) { toast('Informe o nome da turma'); return; }
+  closeModal();
+  setStatus('warn', 'Criando pasta no OneDrive…');
+  try {
+    const rootId = window._rootId || await getRootId();
+    const folderName = makeFolderName(nome, disc, selColor);
+    const nr = await gf('/me/drive/items/' + rootId + '/children', {
+      method: 'POST',
+      body: JSON.stringify({name: folderName, folder:{}, '@microsoft.graph.conflictBehavior':'rename'})
+    });
+    turmas.push({id: nr.id, odId: nr.id, nome, disciplina: disc, cor: selColor, arquivos: []});
+    renderTurmas();
+    setStatus('ok', 'Pasta criada · ' + turmas.length + ' turma(s)');
+    toast('Turma "' + nome + '" criada no OneDrive!');
+  } catch(e) {
+    setStatus('err', 'Erro ao criar pasta');
+    toast('Erro: ' + e.message);
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function ext2tipo(name) {
+  const e = name.split('.').pop().toLowerCase();
+  if (e === 'pdf') return 'pdf';
+  if (['doc','docx'].includes(e)) return 'doc';
+  if (['ppt','pptx'].includes(e)) return 'ppt';
+  if (['xls','xlsx','csv'].includes(e)) return 'xls';
+  if (['png','jpg','jpeg','gif','webp'].includes(e)) return 'img';
+  if (['mp4','mov','avi','mkv'].includes(e)) return 'vid';
+  return 'arq';
+}
+
+function fmtSize(b) {
+  if (!b) return '';
+  return b > 1048576 ? (b/1048576).toFixed(1) + ' MB' : Math.round(b/1024) + ' KB';
+}
+
+function setStatus(type, msg) {
+  document.getElementById('sdot').className = 'sdot ' + type;
+  document.getElementById('stext').textContent = msg;
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Close modal on overlay click
+document.getElementById('turmaModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('turmaModal')) closeModal();
+});
+
+renderSwatches();
+init();
+</script>
+</body>
+</html>
