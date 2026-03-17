@@ -426,34 +426,74 @@ let turmas = [];
 let activeId = null;
 let selColor = 0;
 
-// ── Auth ─────────────────────────────────────────────────────────────────────
-function loginMicrosoft() {
+// ── Auth PKCE ────────────────────────────────────────────────────────────────
+const CLIENT_ID   = 'e2bae87e-217d-453c-ba20-da35c317f488';
+const REDIRECT_URI = location.origin + location.pathname;
+const SCOPES = 'https://graph.microsoft.com/Files.ReadWrite https://graph.microsoft.com/User.Read openid';
+
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+async function pkceChallenge() {
+  const verifier = b64url(crypto.getRandomValues(new Uint8Array(32)));
+  const digest   = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  return { verifier, challenge: b64url(digest) };
+}
+
+async function loginMicrosoft() {
+  const { verifier, challenge } = await pkceChallenge();
+  sessionStorage.setItem('pkce_verifier', verifier);
   const p = new URLSearchParams({
-    client_id: 'e2bae87e-217d-453c-ba20-da35c317f488',
-    response_type: 'token',
-    redirect_uri: location.origin + location.pathname,
-    scope: 'https://graph.microsoft.com/Files.ReadWrite https://graph.microsoft.com/User.Read openid',
-    response_mode: 'fragment',
-    nonce: Math.random().toString(36)
+    client_id:             CLIENT_ID,
+    response_type:         'code',
+    redirect_uri:          REDIRECT_URI,
+    scope:                 SCOPES,
+    response_mode:         'query',
+    code_challenge:        challenge,
+    code_challenge_method: 'S256',
+    nonce:                 b64url(crypto.getRandomValues(new Uint8Array(16)))
   });
   location.href = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize?' + p;
 }
 
-function parseHash() {
-  const h = location.hash.substring(1);
-  if (!h) return null;
-  return new URLSearchParams(h).get('access_token') || null;
+async function exchangeCode(code) {
+  const verifier = sessionStorage.getItem('pkce_verifier');
+  sessionStorage.removeItem('pkce_verifier');
+  const r = await fetch('https://login.microsoftonline.com/consumers/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id:     CLIENT_ID,
+      grant_type:    'authorization_code',
+      code,
+      redirect_uri:  REDIRECT_URI,
+      code_verifier: verifier,
+      scope:         SCOPES
+    })
+  });
+  if (!r.ok) throw new Error(await r.text());
+  const data = await r.json();
+  return data.access_token;
 }
 
 async function init() {
-  const t = parseHash();
-  if (t) {
-    token = t;
+  const params = new URLSearchParams(location.search);
+  const code   = params.get('code');
+  const err    = params.get('error_description') || params.get('error');
+  if (err) { alert('Erro de login: ' + err); return; }
+  if (code) {
     history.replaceState(null, '', location.pathname);
-    await loadUser();
-    show('mainScreen');
-    hide('loginScreen');
-    await loadAll();
+    try {
+      token = await exchangeCode(code);
+      await loadUser();
+      show('mainScreen');
+      hide('loginScreen');
+      await loadAll();
+    } catch(e) {
+      alert('Erro ao autenticar: ' + e.message);
+    }
   }
 }
 
