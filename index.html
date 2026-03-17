@@ -575,17 +575,18 @@ async function loadAll() {
 }
 
 function parseFolderName(raw) {
-  const cm = raw.match(/\[c(\d)\]$/);
+  const cm = raw.match(/__c(\d)__$/);
   const cor = cm ? parseInt(cm[1]) : 0;
-  const s1  = raw.replace(/\[c\d\]$/, '').trim();
-  const dm  = s1.match(/\[d:([^\]]+)\]/);
-  const disciplina = dm ? dm[1] : s1;
-  const nome = s1.replace(/\[d:[^\]]+\]/, '').trim();
+  const s1  = raw.replace(/__c\d__$/, '').trim();
+  const dm  = s1.match(/__d--([^_]+)__/);
+  const disciplina = dm ? dm[1].replace(/--/g, ' ') : s1;
+  const nome = s1.replace(/__d--[^_]+__/, '').trim();
   return {nome, disciplina, cor};
 }
 
 function makeFolderName(nome, disc, cor) {
-  return nome + ' [d:' + disc + '][c' + cor + ']';
+  const discSafe = disc.replace(/\s+/g, '--');
+  return nome + ' __d--' + discSafe + '____c' + cor + '__';
 }
 
 // ── Render turmas ─────────────────────────────────────────────────────────────
